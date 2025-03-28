@@ -18,6 +18,7 @@ ELEMENT_COLORS={
         '命':5,
         '無':7,
 }
+gems = []
 
 # 関数宣言
 
@@ -184,6 +185,7 @@ def show_party(party):
 
 def on_player_turn(party,monster):
     print(f'\n【{party['name']}のターン】(HP={party['hp']})')
+    show_battle_field(party,monster)
     command = input('コマンド? >')
     do_attack(monster,command)
 
@@ -202,6 +204,32 @@ def do_enemy_attack(party):
     damage = 200
     print(f'{damage}のダメージを受けた')
     party['hp'] -= damage
+
+def show_battle_field(party,monster):
+    print('バトルフィールド')
+    print_monster_name(monster)
+    print(f' HP = {monster['hp']} / {monster['max_hp']}')
+
+    for friend in party['friends']:
+        print_monster_name(friend)
+        print(' ',end='')
+
+    print(f'\nHP = {party['hp']} / {party['max_hp']}')
+    gems = fill_gems()
+    print_gems(gems)
+
+def fill_gems():
+    return [random.randint(0,4) for i in range(14)]
+def print_gems(gems):
+    idxs='ABCDEFGHIJKLMN'
+    print('-------------------------')
+    for c in idxs:
+        print(c,end=' ')
+    print()
+    for gem in gems:
+        print(gem,end=' ')
+    print('\n-------------------------')
+
 
 
 # main関数の呼び出し
