@@ -190,7 +190,15 @@ def show_party(party):
 def on_player_turn(party,monster):
     print(f'\n【{party['name']}のターン】(HP={party['hp']})')
     show_battle_field(party,monster)
-    command = input('コマンド? >')
+    while True:
+        command = input('コマンド? >').upper()
+        if check_valid_command(command):
+            break
+        print('エラー:正しいコマンドを入力してください')
+
+    move_gem(command)
+    evaluate_gems(monster,command)
+
     do_attack(monster,command)
 
 def on_enemy_turn(party,monster):
@@ -220,7 +228,7 @@ def show_battle_field(party,monster):
     print(f'\nHP = {party['hp']} / {party['max_hp']}\n')
     print('------------------------------')
     for c in IDXS:
-        print(c+' ',end='')
+        print(c,end=' ')
     print()
     print_gems()
     print('------------------------------')
@@ -235,8 +243,30 @@ def print_gems():
     for i in gems:
         color=ELEMENT_COLORS[eles[i]]
         symbol =ELEMENT_SYMBOLS[eles[i]]
-        print(f'\033[30;4{color}m{symbol}\033[0m'+' ',end='')
+        print(f'\033[30;4{color}m{symbol}\033[0m',end=' ')
     print()
+def check_valid_command(command):
+    if len(command) != 2:
+        return False
+    if command[0] == command[1]:
+        return False
+    for c in command:
+        if not 'A' <= c <= 'N':
+            return False
+    return True
 
+def move_gem(command):
+    b_index = IDXS.index(command[0])
+    e_index = IDXS.index(command[1])
+    dir = 1 if b_index < e_index else -1
+    print_gems()
+    print()
+    for i in range(b_index,e_index,dir):
+        gems[i],gems[i+dir] = gems[i+dir],gems[i]
+        print_gems()
+        print()
+
+def evaluate_gems(monster,command):
+    do_attack(monster,command)
 # main関数の呼び出し
 main()
