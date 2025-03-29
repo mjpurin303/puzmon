@@ -18,25 +18,28 @@ ELEMENT_COLORS={
         '命':5,
         '無':7,
 }
+gems=[]
+
+IDXS ='ABCDEFGHIJKLMN'
 
 # 関数宣言
 
 def main():
     friends=[
             {
-                'name':'青龍',
-                'hp':150,
-                'max_hp':150,
-                'element':'風',
-                'ap':15,
-                'dp':10
-            },
-            {
                 'name':'朱雀',
                 'hp':150,
                 'max_hp':150,
                 'element':'火',
                 'ap':25,
+                'dp':10
+            },
+            {
+                'name':'青龍',
+                'hp':150,
+                'max_hp':150,
+                'element':'風',
+                'ap':15,
                 'dp':10
             },
             {
@@ -135,6 +138,8 @@ def go_dungeon(party,monster_list):
 def do_battle(party,monster):
     print_monster_name(monster)
     print('が現れた!')
+
+    fill_gems()
     
     while True:
         on_player_turn(party,monster)
@@ -155,7 +160,7 @@ def print_monster_name(monster):
     color=ELEMENT_COLORS[monster['element']]
 
     #モンスター名を表示
-    print(f'\033[3{color}m{symbol}{monster_name}{symbol}\033[0m',end='')
+    print(f'\033[30;4{color}m{symbol}{monster_name}{symbol}\033[0m',end='')
 
 def organize_party(player_name,friends):
     total_hp = 0
@@ -184,6 +189,7 @@ def show_party(party):
 
 def on_player_turn(party,monster):
     print(f'\n【{party['name']}のターン】(HP={party['hp']})')
+    show_battle_field(party,monster)
     command = input('コマンド? >')
     do_attack(monster,command)
 
@@ -203,6 +209,34 @@ def do_enemy_attack(party):
     print(f'{damage}のダメージを受けた')
     party['hp'] -= damage
 
+def show_battle_field(party,monster):
+    print('バトルフィールド')
+    print_monster_name(monster)
+    print(f'HP = {monster['hp']} / {monster['max_hp']}')
+
+    for friend in party['friends']:
+        print_monster_name(friend)
+        print(' ',end='')
+    print(f'\nHP = {party['hp']} / {party['max_hp']}\n')
+    print('------------------------------')
+    for c in IDXS:
+        print(c+' ',end='')
+    print()
+    print_gems()
+    print('------------------------------')
+
+    
+def fill_gems():
+    global gems
+    gems=[random.randint(0,4) for _ in range(len(IDXS))]
+
+def print_gems():
+    eles=['火','水','風','土','命','無']
+    for i in gems:
+        color=ELEMENT_COLORS[eles[i]]
+        symbol =ELEMENT_SYMBOLS[eles[i]]
+        print(f'\033[30;4{color}m{symbol}\033[0m'+' ',end='')
+    print()
 
 # main関数の呼び出し
 main()
