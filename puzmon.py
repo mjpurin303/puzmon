@@ -19,6 +19,7 @@ ELEMENT_COLORS={
         '無':7,
 }
 gems=[]
+combo = 0
 
 IDXS ='ABCDEFGHIJKLMN'
 
@@ -205,14 +206,18 @@ def on_enemy_turn(party,monster):
     print_monster_name(monster)
     print(f'のターン】(HP={monster['hp']})')
     do_enemy_attack(party,monster)
-def do_attack(friend,monster):
+def do_attack(friend,monster,banish_count):
     basic_damage=friend['ap'] - monster['dp']
     boost_damage=element_boost(friend,monster)
-    combo = 1
+    combo_damage = combo_boost(banish_count)
 
-    damage = max(1,int(basic_damage * boost_damage * combo))
+    damage = max(1,int(basic_damage * boost_damage * combo_damage))
     dagame = blur_damage(damage)
-    print(f'{damage}のダメージを与えた')
+    print_monster_name(friend)
+    print('の攻撃!',end='')
+    if combo != 1:
+        print(f'{combo}Combo!!',end='')
+    print(f'\n{damage}のダメージを与えた')
     monster['hp'] -= damage
 def do_enemy_attack(party,monster):
     damage = monster['ap'] - party['dp']
@@ -242,7 +247,7 @@ def fill_gems():
     gems=[random.randint(0,4) for _ in range(len(IDXS))]
 
 def print_gems():
-    eles=['火','水','風','土','命','無']
+    eles=['火','風','土','水','命','無']
     for i in gems:
         color=ELEMENT_COLORS[eles[i]]
         symbol =ELEMENT_SYMBOLS[eles[i]]
@@ -270,21 +275,27 @@ def move_gem(command):
         print()
 
 def evaluate_gems(party,monster):
-    start_idx = check_banishable()
-    if start_idx != -1:
-        gem=banish_gems(start_idx)
-        if gem == 4:
-            do_recover(party,1)
+    global combo
+    while True:
+        start_idx = check_banishable()
+        if start_idx != -1:
+            combo+=1
+            gem,banish_count=banish_gems(start_idx)
+            if gem == 4:
+                do_recover(party,banish_count)
+            else:
+                do_attack(party['friends'][gem],monster,banish_count)
+            shift_gems()
         else:
-            do_attack(party['friends'][gem],monster)
-        shift_gems()
-    else:
-        pass
+            empty_count=spawn_gems()
+            if empty_count==0:
+                combo = 0
+                break
 
 def check_banishable():
     count = 1
     for i in range(1,len(gems)):
-        if gems[i] == gems[i-1]:
+        if  gems[i] != 5 and gems[i] == gems[i-1]:
             count+=1
             if count == 3:
                 return i-2
@@ -294,12 +305,14 @@ def check_banishable():
 
 def banish_gems(start_idx):
     gem = gems[start_idx]
+    banish_count=0
     for i in range(start_idx,len(gems)):
         if gem != gems[i]:
             break
         gems[i] = 5
+        banish_count+=1
     print_gems()
-    return gem
+    return (gem,banish_count)
 def shift_gems():
     print_gems()
     for i in range(len(gems)-1,-1,-1):
@@ -307,14 +320,18 @@ def shift_gems():
             popped = gems.pop(i)
             gems.append(popped)
             print_gems()
-    spawn_gems()
+    #spawn_gems()
 
 def spawn_gems():
+    if not 5 in gems:
+        return 0
+    empty_count=gems.count(5)
     for i in range(len(gems)):
         if gems[i] == 5:
             gems[i] = random.randint(0,4)
     print_gems()
     print()
+    return empty_count
 
 def element_boost(friend,monster):
     eles='火風土水'
@@ -328,10 +345,17 @@ def blur_damage(damage):
     rand = random.uniform(-0.1,0.1)+1
     return int(damage*rand)
 
-def do_recover(party,combo):
-    recover_value=min(20 * combo,party['max_hp']-party['hp'])
+def do_recover(party,banish_count):
+    combo_recover=combo_boost(banish_count)
+    recover_value=int(min(20 * combo_recover,party['max_hp']-party['hp']))
     party['hp'] += recover_value
+    if combo != 1:
+        print(f'{combo}Combo!!')
     print(f'HPが{recover_value}回復した！(HP = {party['hp']})')
+
+def combo_boost(banish_count):
+    combo_damage = 1.5 ** (banish_count - 3 + combo)
+    return combo_damage
     
 
 # main関数の呼び出し
