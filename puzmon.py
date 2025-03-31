@@ -4,17 +4,17 @@ import random
 # グローバル変数の宣言
 ELEMENT_SYMBOLS={
         '火':'$',
-        '水':'~',
         '風':'@',
         '土':'#',
+        '水':'~',
         '命':'&',
         '無':' ',
 }
 ELEMENT_COLORS={
         '火':1,
-        '水':6,
         '風':2,
         '土':3,
+        '水':6,
         '命':5,
         '無':7,
 }
@@ -197,22 +197,26 @@ def on_player_turn(party,monster):
         print('エラー:正しいコマンドを入力してください')
 
     move_gem(command)
-    evaluate_gems(monster,command)
+    evaluate_gems(party,monster)
 
 
 def on_enemy_turn(party,monster):
     print(f'\n【',end='')
     print_monster_name(monster)
     print(f'のターン】(HP={monster['hp']})')
-    do_enemy_attack(party)
-def do_attack(monster,command):
-    damage = int(hash(command)) % 50
-    rand = random.uniform(-0.1,0.1)+1
-    damage = int(damage * rand)
+    do_enemy_attack(party,monster)
+def do_attack(friend,monster):
+    basic_damage=friend['ap'] - monster['dp']
+    boost_damage=element_boost(friend,monster)
+    combo = 1
+
+    damage = max(1,int(basic_damage * boost_damage * combo))
+    dagame = blur_damage(damage)
     print(f'{damage}のダメージを与えた')
     monster['hp'] -= damage
-def do_enemy_attack(party):
-    damage = 200
+def do_enemy_attack(party,monster):
+    damage = monster['ap'] - party['dp']
+    damage = max(1,blur_damage(damage))
     print(f'{damage}のダメージを受けた')
     party['hp'] -= damage
 
@@ -265,11 +269,14 @@ def move_gem(command):
         print_gems()
         print()
 
-def evaluate_gems(monster,command):
+def evaluate_gems(party,monster):
     start_idx = check_banishable()
     if start_idx != -1:
-        banish_gems(start_idx)
-        do_attack(monster,command)
+        gem=banish_gems(start_idx)
+        if gem == 4:
+            do_recover(party,1)
+        else:
+            do_attack(party['friends'][gem],monster)
         shift_gems()
     else:
         pass
@@ -292,6 +299,7 @@ def banish_gems(start_idx):
             break
         gems[i] = 5
     print_gems()
+    return gem
 def shift_gems():
     print_gems()
     for i in range(len(gems)-1,-1,-1):
@@ -307,6 +315,24 @@ def spawn_gems():
             gems[i] = random.randint(0,4)
     print_gems()
     print()
+
+def element_boost(friend,monster):
+    eles='火風土水'
+    friend_ele=eles.index(friend['element'])
+    monster_ele=eles.index(monster['element'])
+    boost_values=[1.0,0.5,1.0 ,2.0]
+    boost_idx = (friend_ele+4 -monster_ele) % 4
+    return boost_values[boost_idx]
+
+def blur_damage(damage):
+    rand = random.uniform(-0.1,0.1)+1
+    return int(damage*rand)
+
+def do_recover(party,combo):
+    recover_value=min(20 * combo,party['max_hp']-party['hp'])
+    party['hp'] += recover_value
+    print(f'HPが{recover_value}回復した！(HP = {party['hp']})')
+    
 
 # main関数の呼び出し
 main()
