@@ -199,7 +199,6 @@ def on_player_turn(party,monster):
     move_gem(command)
     evaluate_gems(monster,command)
 
-    do_attack(monster,command)
 
 def on_enemy_turn(party,monster):
     print(f'\n【',end='')
@@ -267,6 +266,47 @@ def move_gem(command):
         print()
 
 def evaluate_gems(monster,command):
-    do_attack(monster,command)
+    start_idx = check_banishable()
+    if start_idx != -1:
+        banish_gems(start_idx)
+        do_attack(monster,command)
+        shift_gems()
+    else:
+        pass
+
+def check_banishable():
+    count = 1
+    for i in range(1,len(gems)):
+        if gems[i] == gems[i-1]:
+            count+=1
+            if count == 3:
+                return i-2
+        else:
+            count=1
+    return -1
+
+def banish_gems(start_idx):
+    gem = gems[start_idx]
+    for i in range(start_idx,len(gems)):
+        if gem != gems[i]:
+            break
+        gems[i] = 5
+    print_gems()
+def shift_gems():
+    print_gems()
+    for i in range(len(gems)-1,-1,-1):
+        if gems[i] == 5:
+            popped = gems.pop(i)
+            gems.append(popped)
+            print_gems()
+    spawn_gems()
+
+def spawn_gems():
+    for i in range(len(gems)):
+        if gems[i] == 5:
+            gems[i] = random.randint(0,4)
+    print_gems()
+    print()
+
 # main関数の呼び出し
 main()
